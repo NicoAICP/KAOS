@@ -1,0 +1,3 @@
+[submodule "lib/no-OS-FatFS-SD-SPI-RPi-Pico"]
+	path = lib/no-OS-FatFS-SD-SPI-RPi-Pico
+	url = https://github.com/amadeoestrada/no-OS-FatFS-SD-SPI-RPi-Pico

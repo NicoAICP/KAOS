@@ -32,20 +32,23 @@
 //--------------------------------------------------------------------+
 tusb_desc_device_t const desc_device =
 {
-  0x12,        // bLength
-  0x01,        // bDescriptorType (Device)
-  0x00, 0x02,  // bcdUSB 2.00
-  0x00,        // bDeviceClass (Use class information in the Interface Descriptors)
-  0x00,        // bDeviceSubClass 
-  0x00,        // bDeviceProtocol 
-  0x20,        // bMaxPacketSize0 32
-  0x30, 0x14,  // idVendor 0x1430
-  0x50, 0x01,  // idProduct 0x0150
-  0x08, 0x25,  // bcdDevice 62.08
-  0x01,        // iManufacturer (String Index)
-  0x02,        // iProduct (String Index)
-  0x00,        // iSerialNumber (String Index)
-  0x01,        // bNumConfigurations 1
+  .bLength            = sizeof(tusb_desc_device_t),
+    .bDescriptorType    = TUSB_DESC_DEVICE,
+    .bcdUSB             = 0x0200,
+    .bDeviceClass       = 0x00,
+    .bDeviceSubClass    = 0x00,
+    .bDeviceProtocol    = 0x00,
+    .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
+
+    .idVendor           = 0x1430,
+    .idProduct          = 0x0150,
+    .bcdDevice          = 0x2508,
+
+    .iManufacturer      = 0x01,
+    .iProduct           = 0x02,
+    .iSerialNumber      = 0x00,
+
+    .bNumConfigurations = 0x01
 // 18 bytes
 };
 
@@ -214,9 +217,9 @@ uint8_t const * tud_descriptor_configuration_cb(uint8_t index)
 char const* string_desc_arr [] =
 {
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
-  "TinyUSB",                     // 1: Manufacturer
-  "Spyro Portal",                // 2: Product
-  "123456",                      // 3: Serials, should use chip ID
+  "NicoAICP",                     // 1: Manufacturer
+  "Spyro Portal"                // 2: Product                      
+                                // 3: Serials, should use chip ID
 };
 
 static uint16_t _desc_str[32];

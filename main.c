@@ -15,6 +15,11 @@
 #include "hardware/i2c.h"
 #include "pico/binary_info.h"
 
+#include "rtc.h"
+#include "f_util.h"
+#include "ff.h"
+#include "hw_config.h"
+
 //////////BUTTON STUFF
 #define BUTTON_SELECT 21
 #define BUTTON_RIGHT 20
@@ -131,9 +136,11 @@ void hid_task(void);
 int main() {
   bool start_emu = false;
     //INIT SERIAL DEBUG
+    printf("new");
     stdio_init_all();
     printf("INIT STDIO DONE\n");
     sleep_ms(200);
+
 
     //INIT GPIO for buttons
     gpio_init(BUTTON_SELECT);
@@ -167,27 +174,57 @@ int main() {
 
     //SEND MESSAGE TO LCD
     lcd_clear();
-    lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
-    lcd_string("Skylander Portal");
-    lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
-    lcd_string("    Emulator    ");
+    lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("    Starting    ") / 2);
+    lcd_string("    Starting    ");
+    lcd_set_cursor(1, (MAX_CHARS / 2) - strlen(" Initialization ") / 2);
+    lcd_string(" Initialization ");
+    sleep_ms(500);
+
+    //SDCARD INIT
+    sd_card_t *pSD = sd_get_by_num(0);
+    FRESULT fr = f_mount(&pSD->fatfs, pSD->pcName, 1);
+    if (FR_OK != fr){
+      printf("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
+      sleep_ms(200);
+
+      lcd_clear();
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  Cannot Mount  ") / 2);
+      lcd_string("  Cannot Mount  ");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     SDCard     ") / 2);
+      lcd_string("     SDCard     ");
+
+       while(true);
+    } 
+
 
     //INIT TINYUSB
     board_init();
     tusb_init();
     printf("INIT TinyUSB done\n");
     sleep_ms(200);
+    lcd_clear();
+    lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("    Finished    ") / 2);
+    lcd_string("    Finished    ");
+    lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  Initializing  ") / 2);
+    lcd_string("  Initializing  ");
+    sleep_ms(500);
 
+    lcd_clear();
+    lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
+    lcd_string("Skylander Portal");
+    lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
+    lcd_string("    Emulator    ");
+    sleep_ms(500);
     while (true) {
 
       if(!gpio_get(BUTTON_START) && !start_emu){
-        lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
-        lcd_string("Starte Emulation");
-        printf("Starte Portal emulation");
-        sleep_ms(200);
+        lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Start Emulation") / 2);
+        lcd_string("Start Emulation");
+        printf("Starting Portal emulation");
+        sleep_ms(500);
         start_emu = true;
-        lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
-        lcd_string("    Emuliere    ");
+        lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Emulating Portal") / 2);
+        lcd_string("Emulating Portal");
       }
 
       if(start_emu){

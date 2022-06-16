@@ -6,3 +6,4 @@ elf2uf2/
 CMakeFiles/
 generated/
 pico-sdk/
+build/

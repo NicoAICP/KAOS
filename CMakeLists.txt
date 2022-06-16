@@ -21,10 +21,17 @@ add_executable(skylander_portal_emu
 
 target_sources(skylander_portal_emu PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/main.c
+        ${CMAKE_CURRENT_LIST_DIR}/hw_config.c
         ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
         )
-# pull in common dependencies
-target_link_libraries(skylander_portal_emu PUBLIC pico_stdlib tinyusb_device tinyusb_board hardware_i2c hardware_gpio)
+        
+add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
+
+
+# pull in common dependencies 
+target_link_libraries(skylander_portal_emu PUBLIC pico_stdlib tinyusb_device tinyusb_board hardware_i2c hardware_gpio FatFs_SPI)
+
+# Tell CMake where to find other source code
 
 # create map/bin/hex/uf2 file etc.
 pico_add_extra_outputs(skylander_portal_emu)

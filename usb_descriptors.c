@@ -26,41 +26,27 @@
 #include "tusb.h"
 #include "usb_descriptors.h"
 
-/* A combination of interfaces must have a unique product id, since PC will save device driver after the first plug.
- * Same VID/PID with different interface e.g MSC (first), then CDC (later) will possibly cause system error on PC.
- *
- * Auto ProductID layout's Bitmap:
- *   [MSB]         HID | MSC | CDC          [LSB]
- */
-#define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
-#define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
-                           _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
-
-#define USB_VID   0x1430
-#define USB_BCD   0x0200
 
 //--------------------------------------------------------------------+
 // Device Descriptors
 //--------------------------------------------------------------------+
 tusb_desc_device_t const desc_device =
 {
-    .bLength            = sizeof(tusb_desc_device_t),
-    .bDescriptorType    = TUSB_DESC_DEVICE,
-    .bcdUSB             = USB_BCD,
-    .bDeviceClass       = 0x00,
-    .bDeviceSubClass    = 0x00,
-    .bDeviceProtocol    = 0x00,
-    .bMaxPacketSize0    = CFG_TUD_ENDPOINT0_SIZE,
-
-    .idVendor           = USB_VID,
-    .idProduct          = 0x0150,
-    .bcdDevice          = 0x0100,
-
-    .iManufacturer      = 0x01,
-    .iProduct           = 0x02,
-    .iSerialNumber      = 0x03,
-
-    .bNumConfigurations = 0x01
+  0x12,        // bLength
+  0x01,        // bDescriptorType (Device)
+  0x00, 0x02,  // bcdUSB 2.00
+  0x00,        // bDeviceClass (Use class information in the Interface Descriptors)
+  0x00,        // bDeviceSubClass 
+  0x00,        // bDeviceProtocol 
+  0x20,        // bMaxPacketSize0 32
+  0x30, 0x14,  // idVendor 0x1430
+  0x50, 0x01,  // idProduct 0x0150
+  0x08, 0x25,  // bcdDevice 62.08
+  0x01,        // iManufacturer (String Index)
+  0x02,        // iProduct (String Index)
+  0x00,        // iSerialNumber (String Index)
+  0x01,        // bNumConfigurations 1
+// 18 bytes
 };
 
 // Invoked when received GET DEVICE DESCRIPTOR
@@ -76,10 +62,21 @@ uint8_t const * tud_descriptor_device_cb(void)
 
 uint8_t const desc_hid_report[] =
 {
-  TUD_HID_REPORT_DESC_KEYBOARD( HID_REPORT_ID(REPORT_ID_KEYBOARD         )),
-  TUD_HID_REPORT_DESC_MOUSE   ( HID_REPORT_ID(REPORT_ID_MOUSE            )),
-  TUD_HID_REPORT_DESC_CONSUMER( HID_REPORT_ID(REPORT_ID_CONSUMER_CONTROL )),
-  TUD_HID_REPORT_DESC_GAMEPAD ( HID_REPORT_ID(REPORT_ID_GAMEPAD          ))
+  0x06, 0x00, 0xFF,  // Usage Page (Vendor Defined 0xFF00)
+  0x09, 0x01,        // Usage (0x01)
+  0xA1, 0x01,        // Collection (Application)
+  0x19, 0x01,        //   Usage Minimum (0x01)
+  0x29, 0x40,        //   Usage Maximum (0x40)
+  0x15, 0x00,        //   Logical Minimum (0)
+  0x26, 0xFF, 0x00,  //   Logical Maximum (255)
+  0x75, 0x08,        //   Report Size (8)
+  0x95, 0x20,        //   Report Count (32)
+  0x81, 0x00,        //   Input (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+  0x19, 0x01,        //   Usage Minimum (0x01)
+  0x29, 0x40,        //   Usage Maximum (0x40)
+  0x91, 0x00,        //   Output (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+  0xC0,              // End Collection
+// 29 bytes
 };
 
 // Invoked when received GET HID REPORT DESCRIPTOR
@@ -107,11 +104,47 @@ enum
 
 uint8_t const desc_configuration[] =
 {
-  // Config number, interface count, string index, total length, attribute, power in mA
-  TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
+  0x09,        // bLength
+  0x02,        // bDescriptorType (Configuration)
+  0x29, 0x00,  // wTotalLength 41
+  0x01,        // bNumInterfaces 1
+  0x01,        // bConfigurationValue
+  0x00,        // iConfiguration (String Index)
+  0x80,        // bmAttributes
+  0x96,        // bMaxPower 300mA
 
-  // Interface number, string index, protocol, report descriptor len, EP In address, size & polling interval
-  TUD_HID_DESCRIPTOR(ITF_NUM_HID, 0, HID_ITF_PROTOCOL_NONE, sizeof(desc_hid_report), EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 5)
+  0x09,        // bLength
+  0x04,        // bDescriptorType (Interface)
+  0x00,        // bInterfaceNumber 0
+  0x00,        // bAlternateSetting
+  0x02,        // bNumEndpoints 2
+  0x03,        // bInterfaceClass
+  0x00,        // bInterfaceSubClass
+  0x00,        // bInterfaceProtocol
+  0x00,        // iInterface (String Index)
+
+  0x09,        // bLength
+  0x21,        // bDescriptorType (HID)
+  0x11, 0x01,  // bcdHID 1.11
+  0x00,        // bCountryCode
+  0x01,        // bNumDescriptors
+  0x22,        // bDescriptorType[0] (HID)
+  0x1D, 0x00,  // wDescriptorLength[0] 29
+
+  0x07,        // bLength
+  0x05,        // bDescriptorType (Endpoint)
+  0x81,        // bEndpointAddress (IN/D2H)
+  0x03,        // bmAttributes (Interrupt)
+  0x20, 0x00,  // wMaxPacketSize 32
+  0x04,        // bInterval 4 (unit depends on device speed)
+
+  0x07,        // bLength
+  0x05,        // bDescriptorType (Endpoint)
+  0x01,        // bEndpointAddress (OUT/H2D)
+  0x03,        // bmAttributes (Interrupt)
+  0x20, 0x00,  // wMaxPacketSize 32
+  0x04,        // bInterval 4 (unit depends on device speed)
+// 41 bytes
 };
 
 #if TUD_OPT_HIGH_SPEED
@@ -182,7 +215,7 @@ char const* string_desc_arr [] =
 {
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
   "TinyUSB",                     // 1: Manufacturer
-  "TinyUSB Device",              // 2: Product
+  "Spyro Portal",                // 2: Product
   "123456",                      // 3: Serials, should use chip ID
 };
 

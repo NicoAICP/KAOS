@@ -280,14 +280,15 @@ int main()
   {
     if(!gpio_get(BUTTON_SELECT)){
       FIL *newfile = calloc(1, sizeof(FIL));
-      FRESULT fr = f_open(newfile, filename, FA_OPEN_EXISTING | FA_READ);
+      FRESULT fr = f_open(newfile, filename, FA_OPEN_EXISTING | FA_READ | FA_WRITE);
       if (fr != FR_OK && fr != FR_EXIST)
         panic("f_open(%s) error: %s (%d)\n", filename, FRESULT_str(fr), fr);
       add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
       printf("File %s loaded", filename);
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File loaded  ") / 2);
       lcd_string("  File loaded  ");
-      sleep_ms(500);
+      sleep_ms(20);
+      //Needs to be called for skylander to be read
       nbuffer = calloc(MSG_SIZE, 1); 
         nbuffer[0] = 0x53;
         nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
@@ -427,7 +428,6 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         break;
       case 'Q': // 0x51 Read Blocks (16 Bytes) From Skylander
         printf("Recieved query\n");
-      //TODO actually read from file
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x51;
         outbuffer[1] = 0x10;
@@ -451,6 +451,36 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
       case 'W': // 0x57 Write Blocks (16 Bytes) To Skylander
         printf("Recieved write\n");
         //Add writing to file
+        midbuffer = calloc(BLOCK_SIZE, 1);
+
+        curfile = loaded_skylanders[0];
+        f_lseek(curfile, buffer[2]*BLOCK_SIZE);
+
+        //FILL MIDBUFFER
+        midbuffer[0] = buffer[3];
+        midbuffer[1] = buffer[4];
+        midbuffer[2] = buffer[5];
+        midbuffer[3] = buffer[6];
+        midbuffer[4] = buffer[7];
+        midbuffer[5] = buffer[8];
+        midbuffer[6] = buffer[9];
+        midbuffer[7] = buffer[10];
+        midbuffer[8] = buffer[11];
+        midbuffer[9] = buffer[12];
+        midbuffer[10] = buffer[13];
+        midbuffer[11] = buffer[14];
+        midbuffer[12] = buffer[15];
+        midbuffer[13] = buffer[16];
+        midbuffer[14] = buffer[17];
+        midbuffer[15] = buffer[18];
+
+        f_write(curfile, midbuffer, BLOCK_SIZE, &actual_len);
+
+        if (actual_len != BLOCK_SIZE)
+          panic("Read data length is %i not %i", actual_len, BLOCK_SIZE);
+        
+        printf("midbuffer: %16x", *midbuffer);
+        free(midbuffer);
         tud_hid_report(0, buffer, bufsize);
         return;
         break;

@@ -1,5 +1,5 @@
 Query:
- -Offset-PaddingTo64Bytes
+0x51-Skylander_Number-Offset-PaddingTo64Bytes
 Response:
 0x51-Skylander_Number-Offset-Data[16]-Padding
 
@@ -34,3 +34,4 @@ Response:
 Portal: AutoSends Sense till host says Shutdown/restart
 Portal: Sends Sense if host asks for Sense
 Portal: Restarts AutoSending if host activates
+Portal: Needs to send Sense as soon as a skylander is loaded to be detected

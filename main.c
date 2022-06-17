@@ -348,6 +348,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         tud_hid_report(0, outbuffer, MSG_SIZE); 
         break;
       case 'S': // 0x53 Sense how many Skylanders are on the Portal
+      //TODO ADD BITMASK STUFF I GUESS
         tud_hid_report(0, buffer, bufsize);
         break;
       case 'Q': // 0x51 Read Blocks (16 Bytes) From Skylander

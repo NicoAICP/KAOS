@@ -288,6 +288,12 @@ int main()
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File loaded  ") / 2);
       lcd_string("  File loaded  ");
       sleep_ms(500);
+      nbuffer = calloc(MSG_SIZE, 1); 
+        nbuffer[0] = 0x53;
+        nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
+        nbuffer[5] = sense_counter++;
+        nbuffer[6] = 0x01;
+        tud_hid_report(0, nbuffer, MSG_SIZE); 
     }
 
     if(!gpio_get(BUTTON_LEFT)){
@@ -309,19 +315,11 @@ int main()
       lcd_string("Emulating Portal");
     }
      tud_task(); 
-    if (start_emu)
-    {
+    
      
 
-      if(!shutthefuckup && send_data_now){
-        nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
-        //pseudo: outbuffer[2:5] = {0x00} (len = 3)
-        nbuffer[5] = sense_counter++;
-        tud_hid_report(0, nbuffer, MSG_SIZE);
-        sleep_ms(20);
-      }     
-      send_data_now = true;
-    }
+   
+    
        
     // tinyusb device task
     // sleep_ms(1000);
@@ -392,6 +390,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
     switch (buffer[0]) // Commands we can recieve from the host
     {         
       case 'R': // 0x52 Reboot/Shutdown Portal  
+        printf("Recieved reboot\n");
         shutthefuckup = true;  
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x52;
@@ -451,10 +450,18 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         break;
       case 'W': // 0x57 Write Blocks (16 Bytes) To Skylander
         printf("Recieved write\n");
+        //Add writing to file
+        tud_hid_report(0, buffer, bufsize);
+        return;
         break;
       case 'C': // 0x42 Skylander Portal Color
+        printf("Color ");
+        tud_hid_report(0,buffer,bufsize);
+        return;
         // tud_hid_report(0, buffer, bufsize);
         break;
+      default:
+        return;
     }
     
 

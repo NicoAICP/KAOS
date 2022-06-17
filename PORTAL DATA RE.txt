@@ -1,5 +1,5 @@
 Query:
-0x51-Skylander_Number-Offset-PaddingTo64Bytes
+ -Offset-PaddingTo64Bytes
 Response:
 0x51-Skylander_Number-Offset-Data[16]-Padding
 

@@ -26,6 +26,8 @@
 #define BLOCK_SIZE 16
 #define MAX_SKYLANDER_COUNT 4
 FIL *loaded_skylanders[MAX_SKYLANDER_COUNT] = {0};
+bool shutthefuckup = false;
+bool send_data_now = false;
 char sense_counter = 0;
 //////////END OF PORTAL
 //////////BUTTON STUFF
@@ -269,7 +271,11 @@ int main()
   sleep_ms(500);
 
   const char filename[] = "Spyro.bin";
-
+    char *nbuffer;
+    nbuffer = calloc(MSG_SIZE, 1); 
+    nbuffer[0] = 0x53;
+    nbuffer[6] = 0x01;  
+    bool send_data = false;
   while (true)
   {
     if(!gpio_get(BUTTON_SELECT)){
@@ -289,7 +295,7 @@ int main()
     }
     
     if(!gpio_get(BUTTON_RIGHT)){
-      
+     
     }
 
     if (!gpio_get(BUTTON_START) && !start_emu)
@@ -302,13 +308,20 @@ int main()
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Emulating Portal") / 2);
       lcd_string("Emulating Portal");
     }
-   
+     tud_task(); 
     if (start_emu)
     {
-      tud_task();
-      
+     
+
+      if(!shutthefuckup && send_data_now){
+        nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
+        //pseudo: outbuffer[2:5] = {0x00} (len = 3)
+        nbuffer[5] = sense_counter++;
+        tud_hid_report(0, nbuffer, MSG_SIZE);
+        sleep_ms(20);
+      }     
+      send_data_now = true;
     }
-    
        
     // tinyusb device task
     // sleep_ms(1000);
@@ -379,7 +392,8 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
     printf("Recieved: %32X\n",*buffer);
     switch (buffer[0]) // Commands we can recieve from the host
     {         
-      case 'R': // 0x52 Reboot/Shutdown Portal    
+      case 'R': // 0x52 Reboot/Shutdown Portal  
+        shutthefuckup = true;  
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x52;
         outbuffer[1] = 0x02;
@@ -387,15 +401,18 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         outbuffer[3] = 0x05;
         outbuffer[4] = 0x08;
         tud_hid_report(0, outbuffer, MSG_SIZE);
+        
         // free(outbuffer);
         break;
       case 'A': // 0x41 Activate Portal
+        
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x41;
-        outbuffer[1] = 0x01;
+        outbuffer[1] = buffer[1];
         outbuffer[2] = 0xff;
         outbuffer[3] = 0x77;
         tud_hid_report(0, outbuffer, MSG_SIZE); 
+        if(buffer[1] == 0x01)  shutthefuckup = false;
         // free(outbuffer);
         break;
       case 'S': // 0x53 Sense how many Skylanders are on the Portal
@@ -437,6 +454,6 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         break;
     }
     printf("Sent: %32X\n",*outbuffer); 
-    free(outbuffer);
+    
   }
 }

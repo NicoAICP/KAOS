@@ -19,12 +19,18 @@ LED:
 Response?:
 0x43-R_Val[1]-G_VAL[1]-B_VAL[1]-Padding
 
-Shutdown/restart:
+Shutdown/restart: 
 0x52-Padding
 Response:
 0x52-0x02-0x0a-0x05-0x08-Padding
 
-Activate:
+Activate: 
 0x41-0x01-Padding
 Response:
 0x41-0x01-0xff-0x77-Padding
+
+
+
+Portal: AutoSends Sense till host says Shutdown/restart
+Portal: Sends Sense if host asks for Sense
+Portal: Restarts AutoSending if host activates

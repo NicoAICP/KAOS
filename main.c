@@ -19,8 +19,13 @@
 #include "f_util.h"
 #include "ff.h"
 #include "hw_config.h"
+
+#include "util.h"
 //////////PORTAL
 #define MSG_SIZE 32
+#define MAX_SKYLANDER_COUNT 4
+FIL *loaded_skylanders[MAX_SKYLANDER_COUNT] = {0};
+char sense_counter = 0;
 //////////END OF PORTAL
 //////////BUTTON STUFF
 #define BUTTON_SELECT 21
@@ -228,22 +233,28 @@ int main()
   lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
   lcd_string("    Emulator    ");
   sleep_ms(500);
-  char *outbuffer;
-     outbuffer = calloc(MSG_SIZE, 1); 
-        outbuffer[0] = 0x52;
-        outbuffer[1] = 0x02;
-        outbuffer[2] = 0x0a;
-        outbuffer[3] = 0x05;
-        outbuffer[4] = 0x08;
+
+  const char filename[] = "Spyro.bin";
+
   while (true)
   {
     if(!gpio_get(BUTTON_SELECT)){
-      printf("Trying to send\n");
-      sleep_ms(200);
-       tud_hid_report(0, outbuffer, MSG_SIZE);
-       sleep_ms(200);
-       printf("Sent\n");
-       sleep_ms(200);
+      FIL *newfile = 0;
+      FRESULT fr = f_open(newfile, filename, FA_OPEN_EXISTING | FA_READ);
+      if (fr != FR_OK && fr != FR_EXIST)
+        panic("f_open(%s) error: %s (%d)\n", filename, FRESULT_str(fr), fr);
+      add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+      printf("File %s loaded", filename);
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File loaded  ") / 2);
+      lcd_string("  File loaded  ");
+    }
+
+    if(!gpio_get(BUTTON_LEFT)){
+      
+    }
+    
+    if(!gpio_get(BUTTON_RIGHT)){
+      
     }
 
     if (!gpio_get(BUTTON_START) && !start_emu)
@@ -337,7 +348,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         outbuffer[3] = 0x05;
         outbuffer[4] = 0x08;
         tud_hid_report(0, outbuffer, MSG_SIZE);
-       
+        free(outbuffer);
         break;
       case 'A': // 0x41 Activate Portal
         outbuffer = calloc(MSG_SIZE, 1); 
@@ -346,17 +357,31 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         outbuffer[2] = 0xff;
         outbuffer[3] = 0x77;
         tud_hid_report(0, outbuffer, MSG_SIZE); 
+        free(outbuffer);
         break;
       case 'S': // 0x53 Sense how many Skylanders are on the Portal
-      //TODO ADD BITMASK STUFF I GUESS
-        tud_hid_report(0, buffer, bufsize);
+        outbuffer = calloc(MSG_SIZE, 1); 
+        outbuffer[0] = 0x53;
+        outbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
+        //pseudo: outbuffer[2:5] = {0x00} (len = 3)
+        outbuffer[5] = sense_counter++;
+        outbuffer[6] = 0x01;
+        tud_hid_report(0, outbuffer, MSG_SIZE); 
+        free(outbuffer);
         break;
       case 'Q': // 0x51 Read Blocks (16 Bytes) From Skylander
+      //TODO actually read from file
+        outbuffer = calloc(MSG_SIZE, 1); 
+        outbuffer[0] = 0x51;
+        outbuffer[1] = 0x01;
+        outbuffer[2] = buffer[2];
+        tud_hid_report(0, outbuffer, MSG_SIZE); 
+        free(outbuffer);
         break;
       case 'W': // 0x57 Write Blocks (16 Bytes) To Skylander
         break;
       case 'C': // 0x42 Skylander Portal Color
-        tud_hid_report(0, buffer, bufsize);
+        // tud_hid_report(0, buffer, bufsize);
         break;
     }
     printf("Sent: %X\n",*outbuffer); 

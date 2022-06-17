@@ -287,7 +287,7 @@ int main()
       printf("File %s loaded", filename);
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File loaded  ") / 2);
       lcd_string("  File loaded  ");
-      sleep_ms(20);
+      sleep_ms(100);
       //Needs to be called for skylander to be read
       nbuffer = calloc(MSG_SIZE, 1); 
         nbuffer[0] = 0x53;

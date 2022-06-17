@@ -389,7 +389,6 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
     FIL *curfile;
     uint actual_len = 0;
 
-    printf("Recieved: %32X\n",*buffer);
     switch (buffer[0]) // Commands we can recieve from the host
     {         
       case 'R': // 0x52 Reboot/Shutdown Portal  
@@ -406,6 +405,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         break;
       case 'A': // 0x41 Activate Portal
         
+        printf("Recieved activate\n");
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x41;
         outbuffer[1] = buffer[1];
@@ -416,6 +416,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         // free(outbuffer);
         break;
       case 'S': // 0x53 Sense how many Skylanders are on the Portal
+        printf("Recieved sense\n");
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x53;
         outbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
@@ -426,6 +427,7 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         // free(outbuffer);
         break;
       case 'Q': // 0x51 Read Blocks (16 Bytes) From Skylander
+        printf("Recieved query\n");
       //TODO actually read from file
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x51;
@@ -448,12 +450,20 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         // free(outbuffer);
         break;
       case 'W': // 0x57 Write Blocks (16 Bytes) To Skylander
+        printf("Recieved write\n");
         break;
       case 'C': // 0x42 Skylander Portal Color
         // tud_hid_report(0, buffer, bufsize);
         break;
     }
-    printf("Sent: %32X\n",*outbuffer); 
     
+
+    printf("Sent: ");
+    for(char *printptr = outbuffer; *printptr != '\0'; printptr++)
+    {
+      printf("%x",*printptr);
+    }
+    printf("\n");
+    free(outbuffer);
   }
 }

@@ -272,14 +272,15 @@ int main()
   while (true)
   {
     if(!gpio_get(BUTTON_SELECT)){
-      FIL *newfile = 0;
-      FRESULT fr = f_open(newfile, filename, FA_OPEN_EXISTING | FA_READ);
+      FIL newfile;
+      FRESULT fr = f_open(&newfile, filename, FA_OPEN_EXISTING | FA_READ);
       if (fr != FR_OK && fr != FR_EXIST)
         panic("f_open(%s) error: %s (%d)\n", filename, FRESULT_str(fr), fr);
-      add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+      add_fd_to_array(&newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
       printf("File %s loaded", filename);
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File loaded  ") / 2);
       lcd_string("  File loaded  ");
+      sleep_ms(500);
     }
 
     if(!gpio_get(BUTTON_LEFT)){

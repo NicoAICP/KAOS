@@ -2,5 +2,4 @@
 Pi Pico Skylander Portal Emulator
 
 To build you need the pi pico sdk
-Create a folder called lib and clone this repo into there
-https://github.com/amadeoestrada/no-OS-FatFS-SD-SPI-RPi-Pico
+You need to copy the tusb_config.h into this location <pico-sdk_location>\lib\tinyusb\src\tusb_config.h

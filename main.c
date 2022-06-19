@@ -23,7 +23,6 @@
 #include "util.h"
 //////////MENU
 int sd_skylander_count = 0;
-char **skylanderFileNames;
 int selected_skylander = -1; //If this is -1, do not read a skylander
 //////////ENDOFMENU
 //////////PORTAL
@@ -94,7 +93,7 @@ static int addr = 0x27;
 #define MAX_CHARS 16
 void SDSkylanders();
 int SkylanderEndsWith(char *, char *);
-void SDSkylandersFill(char***);
+
 /* Quick helper function for single byte transfers */
 void i2c_write_byte(uint8_t val)
 {
@@ -168,6 +167,38 @@ void lcd_init()
 
 void hid_task(void);
 
+size_t f_listfiles(char *names[], size_t max) {  
+     FRESULT res;
+    DIR dir;
+    FILINFO fno;
+    bool skylander = false;
+    size_t count = -1;
+  f_opendir(&dir, "/");   // Open Root
+  do
+  {
+    skylander = false;
+    f_readdir(&dir, &fno);
+    if(fno.fname[0] != 0){
+      
+      if(SkylanderEndsWith(fno.fname, "bin") == 1 || SkylanderEndsWith(fno.fname, "sky") == 1 || SkylanderEndsWith(fno.fname, "dmp") == 1 || SkylanderEndsWith(fno.fname, "dump") == 1){
+         printf("String to alloc: %s | String length = %d\n",fno.fname,strlen(fno.fname)+1);
+         sleep_ms(100);
+          count++;
+          printf("Writing to FileNames[%d]\n",count);
+          names[count] = malloc(strlen(fno.fname)+1);
+          sleep_ms(100);
+        strcpy(names[count], fno.fname);
+        sleep_ms(100);
+      }
+      
+    }       
+  } while(fno.fname[0] != 0);
+
+  f_closedir(&dir);
+  return count;
+}
+
+
 int main()
 {
   bool start_emu = false;
@@ -176,7 +207,13 @@ int main()
   stdio_init_all();
   printf("INIT STDIO DONE\n");
   sleep_ms(200);
-
+  printf("-------------------------------------\n");
+  printf(" KAOS - a Raspbery Pi Pico Skylander \n");
+  printf("      Portal of Power Emulator       \n");
+  printf("-------------------------------------\n");
+  printf("    Made by NicoAICP and redcubie    \n");
+  printf("-------------------------------------\n");
+  sleep_ms(400);
   // INIT GPIO for buttons
   gpio_init(BUTTON_SELECT);
   gpio_set_dir(BUTTON_SELECT, GPIO_IN);
@@ -218,14 +255,13 @@ int main()
   gpio_init(LED4);
   gpio_set_dir(LED4, GPIO_OUT);
   gpio_pull_up(LED4);
-
+  printf("GPIO INIT done\n");
   // INIT i2c FOR LCD
   i2c_init(i2c_default, 100 * 1000);
   gpio_set_function(4, GPIO_FUNC_I2C);
   gpio_set_function(5, GPIO_FUNC_I2C);
   gpio_pull_up(4);
   gpio_pull_up(5);
-
   // Make the I2C pins available to picotool
   bi_decl(bi_2pins_with_func(4, 5, GPIO_FUNC_I2C));
   lcd_init();
@@ -258,6 +294,10 @@ int main()
       ;
   }
   SDSkylanders(); // Gets how many skylanders we have
+
+  char *skyFiles[sd_skylander_count];
+  size_t count = f_listfiles(skyFiles, 255);
+
 
   // INIT TINYUSB
   board_init();
@@ -295,12 +335,14 @@ int main()
           lcd_string("  a  Skylander  ");
           sleep_ms(500);
       }
-      else {
+      else 
+      {
+        //TODO: Check if slot already has a file, if yes remove it
         
          FIL *newfile = calloc(1, sizeof(FIL));
-        FRESULT fr = f_open(newfile, filename, FA_OPEN_EXISTING | FA_READ | FA_WRITE);
+        FRESULT fr = f_open(newfile, skyFiles[selected_skylander], FA_OPEN_EXISTING | FA_READ | FA_WRITE);
         if (fr != FR_OK && fr != FR_EXIST){
-          printf("f_open(%s) error (Probably because file is already loaded): %s (%d)\n", filename, FRESULT_str(fr), fr);
+          printf("f_open(%s) error (Probably because file is already loaded): %s (%d)\n", skyFiles[selected_skylander], FRESULT_str(fr), fr);
           lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
           lcd_string("  File already  ");
           lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
@@ -309,27 +351,29 @@ int main()
         }
         else
         {
-          if(fd_in_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT) == 0){
-          add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
-          printf("File %s loaded", filename);
-          lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File  loaded  ") / 2);
-          lcd_string("  File  loaded  ");
-          sleep_ms(500);
-          //Needs to be called for skylander to be read
-          nbuffer = calloc(MSG_SIZE, 1); 
-          nbuffer[0] = 0x53;
-          nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
-          nbuffer[5] = sense_counter++;
-          nbuffer[6] = 0x01;
-          tud_hid_report(0, nbuffer, MSG_SIZE); 
-        }
-        else{
-          lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
-          lcd_string("  File already  ");
-          lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
-          lcd_string("     loaded     ");
-          sleep_ms(500);
-        }
+          if(fd_in_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT) == 0)
+          {
+            add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+            printf("File %s loaded", skyFiles[selected_skylander]);
+            lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File  loaded  ") / 2);
+            lcd_string("  File  loaded  ");
+            sleep_ms(500);
+            //Needs to be called for skylander to be read
+            nbuffer = calloc(MSG_SIZE, 1); 
+            nbuffer[0] = 0x53;
+            nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
+            nbuffer[5] = sense_counter++;
+            nbuffer[6] = 0x01;
+            tud_hid_report(0, nbuffer, MSG_SIZE); 
+          }
+          else
+          {
+            lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
+            lcd_string("  File already  ");
+            lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
+            lcd_string("     loaded     ");
+            sleep_ms(500);
+          }
         }
        
       }
@@ -348,6 +392,16 @@ int main()
       }
       printf("Selected Skylander #%d\n",selected_skylander);
       sleep_ms(100);
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
+      lcd_string(" Selected  File ");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
+      lcd_string(skyFiles[selected_skylander]);
+      sleep_ms(500);
+
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
+      lcd_string("Skylander Portal");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
+      lcd_string("    Emulator    ");
       sleep_ms(500);
     }
     
@@ -357,6 +411,16 @@ int main()
       }
       printf("Selected Skylander #%d\n",selected_skylander);
       sleep_ms(100);
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
+      lcd_string(" Selected  File ");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
+      lcd_string(skyFiles[selected_skylander]);
+      sleep_ms(500);
+
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
+      lcd_string("Skylander Portal");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
+      lcd_string("    Emulator    ");
       sleep_ms(500);
     }
 
@@ -414,6 +478,7 @@ void SDSkylanders(){
   f_closedir(&dir);
 }
 
+
 int SkylanderEndsWith(char *str, char *suffix)
 {
   int str_len = strlen(str);
@@ -423,8 +488,6 @@ int SkylanderEndsWith(char *str, char *suffix)
     (str_len >= suffix_len) &&
     (0 == strcmp(str + (str_len-suffix_len), suffix));  
 }
-
-
 
 //--------------------------------------------------------------------+
 // Device callbacks

@@ -29,6 +29,28 @@ Activate:
 Response:
 0x41-0x01-0xff-0x77-Padding
 
+J? :
+0x4A - Padding ?
+Response = 0x4a -Padding ? //Something with sound
+
+LED Shananigans: (L)
+Change Right LED (Traptanium Portal): 0x4C - 0x00 - R_Val[1]-G_VAL[1]-B_VAL[1]-Padding
+Change LEFT LED (Traptanium Portal): 0x4C - 0x02 - R_Val[1]-G_VAL[1]-B_VAL[1]-Padding
+Return Nothing
+
+Activate Speaker (M)
+0x4D - Anything bigger than 0x00 - Padding
+Response:
+If it has speaker: 0x4D - 0x01 - Padding
+If no speaker: 0x4D - Padding
+
+Deactivate Speaker (M)
+0x4D -  Padding
+Response
+0x4D - Padding
+
+V? : 0x56
+
 
 
 Portal: AutoSends Sense till host says Shutdown/restart

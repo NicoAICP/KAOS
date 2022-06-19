@@ -21,6 +21,11 @@
 #include "hw_config.h"
 
 #include "util.h"
+//////////MENU
+int sd_skylander_count = 0;
+char **skylanderFileNames;
+int selected_skylander = -1; //If this is -1, do not read a skylander
+//////////ENDOFMENU
 //////////PORTAL
 #define MSG_SIZE 32
 #define BLOCK_SIZE 16
@@ -87,6 +92,9 @@ static int addr = 0x27;
 
 #define MAX_LINES 2
 #define MAX_CHARS 16
+void SDSkylanders();
+int SkylanderEndsWith(char *, char *);
+void SDSkylandersFill(char***);
 /* Quick helper function for single byte transfers */
 void i2c_write_byte(uint8_t val)
 {
@@ -249,6 +257,7 @@ int main()
     while (true)
       ;
   }
+  SDSkylanders(); // Gets how many skylanders we have
 
   // INIT TINYUSB
   board_init();
@@ -270,7 +279,7 @@ int main()
   lcd_string("    Emulator    ");
   sleep_ms(500);
 
-  const char filename[] = "Spyro.bin";
+  const char filename[] = "WindUp.bin";
     char *nbuffer;
     nbuffer = calloc(MSG_SIZE, 1); 
     nbuffer[0] = 0x53;
@@ -279,41 +288,88 @@ int main()
   while (true)
   {
     if(!gpio_get(BUTTON_SELECT)){
-      FIL *newfile = calloc(1, sizeof(FIL));
-      FRESULT fr = f_open(newfile, filename, FA_OPEN_EXISTING | FA_READ | FA_WRITE);
-      if (fr != FR_OK && fr != FR_EXIST)
-        panic("f_open(%s) error: %s (%d)\n", filename, FRESULT_str(fr), fr);
-      add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
-      printf("File %s loaded", filename);
-      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File loaded  ") / 2);
-      lcd_string("  File loaded  ");
-      sleep_ms(100);
-      //Needs to be called for skylander to be read
-      nbuffer = calloc(MSG_SIZE, 1); 
-        nbuffer[0] = 0x53;
-        nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
-        nbuffer[5] = sense_counter++;
-        nbuffer[6] = 0x01;
-        tud_hid_report(0, nbuffer, MSG_SIZE); 
+      if(selected_skylander == -1){
+          lcd_set_cursor(0, (MAX_CHARS / 2) - strlen(" Please  select ") / 2);
+          lcd_string(" Please  select ");
+          lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  a  Skylander  ") / 2);
+          lcd_string("  a  Skylander  ");
+          sleep_ms(500);
+      }
+      else {
+        
+         FIL *newfile = calloc(1, sizeof(FIL));
+        FRESULT fr = f_open(newfile, filename, FA_OPEN_EXISTING | FA_READ | FA_WRITE);
+        if (fr != FR_OK && fr != FR_EXIST){
+          printf("f_open(%s) error (Probably because file is already loaded): %s (%d)\n", filename, FRESULT_str(fr), fr);
+          lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
+          lcd_string("  File already  ");
+          lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
+          lcd_string("     loaded     ");
+          sleep_ms(500);
+        }
+        else
+        {
+          if(fd_in_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT) == 0){
+          add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+          printf("File %s loaded", filename);
+          lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File  loaded  ") / 2);
+          lcd_string("  File  loaded  ");
+          sleep_ms(500);
+          //Needs to be called for skylander to be read
+          nbuffer = calloc(MSG_SIZE, 1); 
+          nbuffer[0] = 0x53;
+          nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
+          nbuffer[5] = sense_counter++;
+          nbuffer[6] = 0x01;
+          tud_hid_report(0, nbuffer, MSG_SIZE); 
+        }
+        else{
+          lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
+          lcd_string("  File already  ");
+          lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
+          lcd_string("     loaded     ");
+          sleep_ms(500);
+        }
+        }
+       
+      }
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
+      lcd_string("Skylander Portal");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
+      lcd_string("    Emulator    ");
+      sleep_ms(500);
     }
 
     if(!gpio_get(BUTTON_LEFT)){
-      
+      if(selected_skylander == -1){
+        selected_skylander = 0;
+      }else if(selected_skylander > 0){
+        selected_skylander--;
+      }
+      printf("Selected Skylander #%d\n",selected_skylander);
+      sleep_ms(100);
+      sleep_ms(500);
     }
     
     if(!gpio_get(BUTTON_RIGHT)){
-     
+      if(selected_skylander < sd_skylander_count - 1){
+        selected_skylander++;
+      }
+      printf("Selected Skylander #%d\n",selected_skylander);
+      sleep_ms(100);
+      sleep_ms(500);
     }
 
-    if (!gpio_get(BUTTON_START) && !start_emu)
+    if (!gpio_get(BUTTON_START))
     {
-      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Start Emulation") / 2);
+      //Switch between Skylander and Slot mode
+     /* lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Start Emulation") / 2);
       lcd_string("Start Emulation");
       printf("Starting Portal emulation");
       sleep_ms(500);
       start_emu = true;
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Emulating Portal") / 2);
-      lcd_string("Emulating Portal");
+      lcd_string("Emulating Portal");*/
     }
      tud_task(); 
     
@@ -327,6 +383,48 @@ int main()
   }
   return 0;
 }
+
+void SDSkylanders(){
+    FRESULT res;
+    DIR dir;
+    FILINFO fno;
+    bool skylander = false;
+  f_opendir(&dir, "/");   // Open Root
+  do
+  {
+    skylander = false;
+    f_readdir(&dir, &fno);
+    if(fno.fname[0] != 0){
+      
+      if(SkylanderEndsWith(fno.fname, "bin") == 1 || SkylanderEndsWith(fno.fname, "sky") == 1 || SkylanderEndsWith(fno.fname, "dmp") == 1 || SkylanderEndsWith(fno.fname, "dump") == 1){
+         printf("Skylander found: %s\n", fno.fname);
+         sleep_ms(100);
+        // skylanderFileNames[sd_skylander_count] = fno.fname;
+          sd_skylander_count++;
+      }
+      else{
+        printf("File is not a Skylander: %s\n", fno.fname);
+        sleep_ms(100);
+      }
+    }
+       
+  } while(fno.fname[0] != 0);
+  printf("Found %d Skylanders\n",sd_skylander_count);
+  sleep_ms(100);
+  f_closedir(&dir);
+}
+
+int SkylanderEndsWith(char *str, char *suffix)
+{
+  int str_len = strlen(str);
+  int suffix_len = strlen(suffix);
+
+  return 
+    (str_len >= suffix_len) &&
+    (0 == strcmp(str + (str_len-suffix_len), suffix));  
+}
+
+
 
 //--------------------------------------------------------------------+
 // Device callbacks
@@ -402,6 +500,18 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         tud_hid_report(0, outbuffer, MSG_SIZE);
         
         // free(outbuffer);
+        break;
+      case 'J':
+        printf("I do not know what it does but something related to sound");
+        outbuffer = calloc(MSG_SIZE, 1); 
+        outbuffer[0] = buffer[0];
+        tud_hid_report(0, outbuffer, MSG_SIZE);
+        break;
+      case 'M':
+        printf("Activate / Deactivate speaker");
+        outbuffer = calloc(MSG_SIZE, 1); 
+        outbuffer[0] = buffer[0]; //We only send the command back without any return value, since we do not have a speaker
+        tud_hid_report(0, outbuffer, MSG_SIZE);
         break;
       case 'A': // 0x41 Activate Portal
         

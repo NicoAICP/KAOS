@@ -4,6 +4,7 @@ Response:
 0x51-Skylander_Number-Offset-Data[16]-Padding
 
 
+
 Write:
 0x57-Skylander_Number-Offset-Data[16]-Padding
 Response:
@@ -57,3 +58,11 @@ Portal: AutoSends Sense till host says Shutdown/restart
 Portal: Sends Sense if host asks for Sense
 Portal: Restarts AutoSending if host activates
 Portal: Needs to send Sense as soon as a skylander is loaded to be detected
+
+
+Skylander_Number_queryWrite =
+ - Skylander #1 : 0x20
+ - Skylander #2 : 0x21
+Skylander_Number_queryWrite_response=
+ - Skylander #1 : 0x10
+ - Skylander #2 : 0x11

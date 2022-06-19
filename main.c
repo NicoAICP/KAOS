@@ -255,7 +255,7 @@ int main()
   gpio_init(LED4);
   gpio_set_dir(LED4, GPIO_OUT);
   gpio_pull_up(LED4);
-  printf("GPIO INIT done\n");
+
   // INIT i2c FOR LCD
   i2c_init(i2c_default, 100 * 1000);
   gpio_set_function(4, GPIO_FUNC_I2C);
@@ -319,7 +319,6 @@ int main()
   lcd_string("    Emulator    ");
   sleep_ms(500);
 
-  const char filename[] = "WindUp.bin";
     char *nbuffer;
     nbuffer = calloc(MSG_SIZE, 1); 
     nbuffer[0] = 0x53;
@@ -338,7 +337,7 @@ int main()
       else 
       {
         //TODO: Check if slot already has a file, if yes remove it
-        
+
          FIL *newfile = calloc(1, sizeof(FIL));
         FRESULT fr = f_open(newfile, skyFiles[selected_skylander], FA_OPEN_EXISTING | FA_READ | FA_WRITE);
         if (fr != FR_OK && fr != FR_EXIST){
@@ -357,7 +356,7 @@ int main()
             printf("File %s loaded", skyFiles[selected_skylander]);
             lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File  loaded  ") / 2);
             lcd_string("  File  loaded  ");
-            sleep_ms(500);
+            sleep_ms(100);
             //Needs to be called for skylander to be read
             nbuffer = calloc(MSG_SIZE, 1); 
             nbuffer[0] = 0x53;
@@ -390,14 +389,16 @@ int main()
       }else if(selected_skylander > 0){
         selected_skylander--;
       }
+
       printf("Selected Skylander #%d\n",selected_skylander);
       sleep_ms(100);
+      lcd_clear();
       lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
       lcd_string(" Selected  File ");
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
       lcd_string(skyFiles[selected_skylander]);
       sleep_ms(500);
-
+      lcd_clear();
       lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
       lcd_string("Skylander Portal");
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
@@ -411,12 +412,13 @@ int main()
       }
       printf("Selected Skylander #%d\n",selected_skylander);
       sleep_ms(100);
+      lcd_clear();
       lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
       lcd_string(" Selected  File ");
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
       lcd_string(skyFiles[selected_skylander]);
       sleep_ms(500);
-
+      lcd_clear();
       lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
       lcd_string("Skylander Portal");
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
@@ -426,14 +428,14 @@ int main()
 
     if (!gpio_get(BUTTON_START))
     {
-      //Switch between Skylander and Slot mode
-     /* lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Start Emulation") / 2);
-      lcd_string("Start Emulation");
-      printf("Starting Portal emulation");
-      sleep_ms(500);
-      start_emu = true;
-      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("Emulating Portal") / 2);
-      lcd_string("Emulating Portal");*/
+       nbuffer = calloc(MSG_SIZE, 1); 
+            nbuffer[0] = 0x53;
+            nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
+            nbuffer[5] = sense_counter++;
+            nbuffer[6] = 0x01;
+            tud_hid_report(0, nbuffer, MSG_SIZE); 
+            free(nbuffer);
+            sleep_ms(20);
     }
      tud_task(); 
     
@@ -604,16 +606,25 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         outbuffer = calloc(MSG_SIZE, 1); 
         outbuffer[0] = 0x51;
         outbuffer[1] = 0x10;
+        if(buffer[1] == 0x11 || buffer[1] == 0x21){
+           outbuffer[1] = 0x11;
+        }    
         outbuffer[2] = buffer[2];
 
         midbuffer = calloc(BLOCK_SIZE, 1);
-
-        curfile = loaded_skylanders[0];
+        //if buffer[1] == 0x20 loaded_skylanders[0] else [1]
+         curfile = loaded_skylanders[0]; //read skylander #1
+         if(buffer[1] == 0x21 || buffer[1] == 0x11){
+          curfile = loaded_skylanders[1]; //read skylander #2
+        }           
         f_lseek(curfile, buffer[2]*BLOCK_SIZE);
         f_read(curfile, midbuffer, BLOCK_SIZE, &actual_len);
 
-        if (actual_len != BLOCK_SIZE)
-          panic("Read data length is %i not %i", actual_len, BLOCK_SIZE);
+        if (actual_len != BLOCK_SIZE){
+          printf("Read data length is %i not %i", actual_len, BLOCK_SIZE);
+          return;
+        }
+          
         
         memcpy(outbuffer+3, midbuffer, BLOCK_SIZE);
         printf("midbuffer: %16x", *midbuffer);
@@ -626,7 +637,12 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
         //Add writing to file
         midbuffer = calloc(BLOCK_SIZE, 1);
 
-        curfile = loaded_skylanders[0];
+        //if buffer[1] == 0x20 loaded_skylanders[0] else [1]   
+       
+          curfile = loaded_skylanders[0]; //read skylander #1
+         if(buffer[1] == 0x21 || buffer[1] == 0x11){
+          curfile = loaded_skylanders[1]; //read skylander #2
+        }   
         f_lseek(curfile, buffer[2]*BLOCK_SIZE);
 
         //FILL MIDBUFFER
@@ -649,13 +665,45 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 
         f_write(curfile, midbuffer, BLOCK_SIZE, &actual_len);
 
-        if (actual_len != BLOCK_SIZE)
-          panic("Read data length is %i not %i", actual_len, BLOCK_SIZE);
+        if (actual_len != BLOCK_SIZE){
+          //lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("    Starting    ") / 2);
+          //lcd_string(" Error  writing ");
+          printf("Read data length is %i not %i", actual_len, BLOCK_SIZE);
+          return;
+        }
+          
         
         printf("midbuffer: %16x", *midbuffer);
         free(midbuffer);
-        tud_hid_report(0, buffer, bufsize);
-        return;
+        //If skylander #1 -> buffer[1] = 0x10, else buffer[1] = 0x11
+        outbuffer = calloc(MSG_SIZE, 1); 
+
+        //can probably be done easier but fuck it
+        outbuffer[0] = buffer[0];
+        outbuffer[1] = buffer[1];
+        outbuffer[2] = buffer[2];
+        outbuffer[3] = buffer[3];
+        outbuffer[4] = buffer[4];
+        outbuffer[5] = buffer[5];
+        outbuffer[6] = buffer[6];
+        outbuffer[7] = buffer[7];
+        outbuffer[8] = buffer[8];
+        outbuffer[9] = buffer[9];
+        outbuffer[10] = buffer[10];
+        outbuffer[11] = buffer[11];
+        outbuffer[12] = buffer[12];
+        outbuffer[13] = buffer[13];
+        outbuffer[14] = buffer[14];
+        outbuffer[15] = buffer[15];
+        outbuffer[16] = buffer[16];
+        outbuffer[17] = buffer[17];
+        outbuffer[18] = buffer[18];
+
+        outbuffer[1] = 0x10;
+        if(buffer[1] == 0x11){
+           outbuffer[1] = 0x11;
+        }   
+        tud_hid_report(0, outbuffer, bufsize);
         break;
       case 'C': // 0x42 Skylander Portal Color
         printf("Color ");

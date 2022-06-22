@@ -12,7 +12,7 @@ To Emulate the portal, just plug in the Microcontroller into a USB Port of a Con
 
 What does which button do?
 
-(Image of Board with numbers here)
+![Board Diagram with Numbers](https://media.discordapp.net/attachments/943504899956703323/989223408011198554/unknown.png?width=496&height=671)
 
  + Button 1: Changes the selected slot to the Left (Player 2 -> Player 1)
  + Button 2: Changes the selected slot to the Right (Player 1 -> Player 2)
@@ -39,11 +39,11 @@ Connect all the things like the Connection Diagram is telling you
 
 Connection Diagram
 
-(insert Diagram here)
+![Connection Diagram](https://media.discordapp.net/attachments/943501791612522527/989221754335535125/unknown.png?width=528&height=670)
  
 it should look something like this:
 
-(my bad board here)
+![Nicos Breadboard](https://media.discordapp.net/attachments/943501791612522527/989222203579052042/20220622_193502.jpg?width=895&height=671)
 
 ## Installation
 Copy the KAOS.uf2 File onto the Microcontroller, while it is in flash mode.

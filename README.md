@@ -9,6 +9,7 @@ Supports following types of Skylander formats:
 
 ## Usage
 To Emulate the portal, just plug in the Microcontroller into a USB Port of a Console. As soon as the RP2040 is ready it will be detected as a Portal.
+
 What does which button do?
 
 (Image of Board with numbers here)
@@ -32,6 +33,7 @@ Required Things for the Breadboard (atleast how I built it):
 Connect all the things like the Connection Diagram is telling you
 
 Connection Diagram
+
 (insert Diagram here)
  
 it should look something like this:
@@ -43,4 +45,5 @@ Copy the KAOS.uf2 File onto the Microcontroller, while it is in flash mode.
 
 ## Building
 To build you need the pi pico sdk
+
 You need to copy the tusb_config.h into this location <pico-sdk_location>\lib\tinyusb\src\tusb_config.h

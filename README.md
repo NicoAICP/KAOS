@@ -21,6 +21,11 @@ What does which button do?
  + Button 5: Change File Selection to the Right (If File 2 would be Spyro.bin and File 1 Kaos.bin, it would switch Kaos for Spyro)
  + Button 6: Load/Unload Skylander from selected slot
 
+## Known Issues:
+
+ + Slot selection does not work (Currently, if you load a skylander, after one is already loaded, it gets assigned the next Slot)
+ + Unloading Skylanders does not work (To switch your skylander, you need to unplug the RP2040)
+
 ## Creating the Pico Board
 Required Things for the Breadboard (atleast how I built it):
  + RP2040 Based Microcontroller

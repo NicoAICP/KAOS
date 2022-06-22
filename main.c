@@ -239,22 +239,6 @@ int main()
   gpio_set_dir(BUTTON_SLOT_RIGHT, GPIO_IN);
   gpio_pull_up(BUTTON_SLOT_RIGHT);
 
-  //LEDS
-  gpio_init(LED1);
-  gpio_set_dir(LED1, GPIO_OUT);
-  gpio_pull_up(LED1);
-
-  gpio_init(LED2);
-  gpio_set_dir(LED2, GPIO_OUT);
-  gpio_pull_up(LED2);
-
-  gpio_init(LED3);
-  gpio_set_dir(LED3, GPIO_OUT);
-  gpio_pull_up(LED3);
-
-  gpio_init(LED4);
-  gpio_set_dir(LED4, GPIO_OUT);
-  gpio_pull_up(LED4);
 
   // INIT i2c FOR LCD
   i2c_init(i2c_default, 100 * 1000);

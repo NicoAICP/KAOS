@@ -26,6 +26,7 @@
 //////////MENU
 int sd_skylander_count = 0;
 int selected_skylander = -1; // If this is -1, do not read a skylander
+int selected_slot = 0;
 //////////ENDOFMENU
 //////////PORTAL
 #define MSG_SIZE 32
@@ -330,6 +331,7 @@ int main()
         if (fr != FR_OK && fr != FR_EXIST)
         {
           printf("f_open(%s) error (Probably because file is already loaded): %s (%d)\n", skyFiles[selected_skylander], FRESULT_str(fr), fr);
+          remove_fd_from_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
           lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
           lcd_string("  File already  ");
           lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
@@ -375,6 +377,7 @@ int main()
           }
           else
           {
+            remove_fd_from_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
             lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
             lcd_string("  File already  ");
             lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
@@ -396,9 +399,14 @@ int main()
       {
         selected_skylander = 0;
       }
+     
       else if (selected_skylander > 0)
       {
         selected_skylander--;
+      }
+      else
+       {
+        selected_skylander = sd_skylander_count - 1;
       }
 
       printf("Selected Skylander #%d\n", selected_skylander);
@@ -423,6 +431,10 @@ int main()
       {
         selected_skylander++;
       }
+      else
+      {
+        selected_skylander = 0;
+      }
       printf("Selected Skylander #%d\n", selected_skylander);
       sleep_ms(100);
       lcd_clear();
@@ -433,6 +445,53 @@ int main()
       sleep_ms(500);
       lcd_clear();
       lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("Skylander Portal") / 2);
+      lcd_string("Skylander Portal");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
+      lcd_string("    Emulator    ");
+      sleep_ms(500);
+    }
+
+    if(!gpio_get(BUTTON_SLOT_RIGHT)){
+      if (selected_slot < MAX_SKYLANDER_COUNT - 1)
+      {
+        selected_slot++;
+      }
+      else{
+        selected_slot = 0;
+      }
+      char str[1];
+      sprintf(str, "%d", selected_slot);
+      lcd_clear();
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
+      lcd_string(" Selected  Slot ");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
+      lcd_string(str);
+      sleep_ms(500);
+      lcd_clear();
+      lcd_string("Skylander Portal");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
+      lcd_string("    Emulator    ");
+      sleep_ms(500);
+    }
+
+    if(!gpio_get(BUTTON_SLOT_LEFT)){
+      if (selected_slot > 0)
+      {
+        selected_slot--;
+      }
+      else
+      {
+        selected_slot = MAX_SKYLANDER_COUNT - 1;
+      }
+      char str[1];
+      sprintf(str, "%d", selected_slot);
+      lcd_clear();
+      lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
+      lcd_string(" Selected  Slot ");
+      lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
+      lcd_string(str);
+      sleep_ms(500);
+      lcd_clear();
       lcd_string("Skylander Portal");
       lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("    Emulator    ") / 2);
       lcd_string("    Emulator    ");
@@ -620,18 +679,41 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
       outbuffer = calloc(MSG_SIZE, 1);
       outbuffer[0] = 0x51;
       outbuffer[1] = 0x10;
-      if (buffer[1] == 0x11 || buffer[1] == 0x21)
+       if(buffer[1] == 0x10 || buffer[1] == 0x20 || buffer[1] == 0x30 || buffer[1] == 0x40 || buffer[1] == 0x50 || buffer[1] == 0x60 || buffer[1] == 0x70 || buffer[1] == 0x80 || buffer[1] == 0x90 || buffer[1] == 0xA0 || buffer[1] == 0xB0 || buffer[1] == 0xC0 || buffer[1] == 0xD0 || buffer[1] == 0xE0 || buffer[1] == 0xF0)
+        {
+       outbuffer[1] = 0x10;
+      }
+      if(buffer[1] == 0x11 || buffer[1] == 0x21 || buffer[1] == 0x31 || buffer[1] == 0x41 || buffer[1] == 0x51 || buffer[1] == 0x61 || buffer[1] == 0x71 || buffer[1] == 0x81 || buffer[1] == 0x91 || buffer[1] == 0xA1 || buffer[1] == 0xB1 || buffer[1] == 0xC1 || buffer[1] == 0xD1 || buffer[1] == 0xE1 || buffer[1] == 0xF1)
       {
         outbuffer[1] = 0x11;
       }
+      if (buffer[1] == 0x12 || buffer[1] == 0x22 || buffer[1] == 0x32 || buffer[1] == 0x42 || buffer[1] == 0x52 || buffer[1] == 0x62 || buffer[1] == 0x72 || buffer[1] == 0x82 || buffer[1] == 0x92 || buffer[1] == 0xA2 || buffer[1] == 0xB2 || buffer[1] == 0xC2 || buffer[1] == 0xD2 || buffer[1] == 0xE2 || buffer[1] == 0xF2)
+      {
+         outbuffer[1] = 0x12;
+      }
+      
       outbuffer[2] = buffer[2];
 
       midbuffer = calloc(BLOCK_SIZE, 1);
       // if buffer[1] == 0x20 loaded_skylanders[0] else [1]
-      curfile = loaded_skylanders[0]; // read skylander #1
-      if (buffer[1] == 0x21 || buffer[1] == 0x11)
+      /*curfile = loaded_skylanders[0]; // read skylander #1
+       if(buffer[1] & 0x01 == 1)
+      //if (buffer[1] == 0x21 || buffer[1] == 0x11)
       {
         curfile = loaded_skylanders[1]; // read skylander #2
+      }*/
+      
+        if(buffer[1] == 0x10 || buffer[1] == 0x20 || buffer[1] == 0x30 || buffer[1] == 0x40 || buffer[1] == 0x50 || buffer[1] == 0x60 || buffer[1] == 0x70 || buffer[1] == 0x80 || buffer[1] == 0x90 || buffer[1] == 0xA0 || buffer[1] == 0xB0 || buffer[1] == 0xC0 || buffer[1] == 0xD0 || buffer[1] == 0xE0 || buffer[1] == 0xF0)
+        {
+        curfile = loaded_skylanders[0];
+      }
+      if(buffer[1] == 0x11 || buffer[1] == 0x21 || buffer[1] == 0x31 || buffer[1] == 0x41 || buffer[1] == 0x51 || buffer[1] == 0x61 || buffer[1] == 0x71 || buffer[1] == 0x81 || buffer[1] == 0x91 || buffer[1] == 0xA1 || buffer[1] == 0xB1 || buffer[1] == 0xC1 || buffer[1] == 0xD1 || buffer[1] == 0xE1 || buffer[1] == 0xF1)
+      {
+        curfile = loaded_skylanders[1];
+      }
+      if (buffer[1] == 0x12 || buffer[1] == 0x22 || buffer[1] == 0x32 || buffer[1] == 0x42 || buffer[1] == 0x52 || buffer[1] == 0x62 || buffer[1] == 0x72 || buffer[1] == 0x82 || buffer[1] == 0x92 || buffer[1] == 0xA2 || buffer[1] == 0xB2 || buffer[1] == 0xC2 || buffer[1] == 0xD2 || buffer[1] == 0xE2 || buffer[1] == 0xF2)
+      {
+        curfile = loaded_skylanders[2];
       }
       f_lseek(curfile, buffer[2] * BLOCK_SIZE);
       f_read(curfile, midbuffer, BLOCK_SIZE, &actual_len);
@@ -654,12 +736,24 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
       midbuffer = calloc(BLOCK_SIZE, 1);
 
       // if buffer[1] == 0x20 loaded_skylanders[0] else [1]
-
-      curfile = loaded_skylanders[0]; // read skylander #1
-      if (buffer[1] == 0x21 || buffer[1] == 0x11)
+      if(buffer[1] == 0x10 || buffer[1] == 0x20 || buffer[1] == 0x30 || buffer[1] == 0x40 || buffer[1] == 0x50 || buffer[1] == 0x60 || buffer[1] == 0x70 || buffer[1] == 0x80 || buffer[1] == 0x90 || buffer[1] == 0xA0 || buffer[1] == 0xB0 || buffer[1] == 0xC0 || buffer[1] == 0xD0 || buffer[1] == 0xE0 || buffer[1] == 0xF0)
+        {
+        curfile = loaded_skylanders[0];
+      }
+      if(buffer[1] == 0x11 || buffer[1] == 0x21 || buffer[1] == 0x31 || buffer[1] == 0x41 || buffer[1] == 0x51 || buffer[1] == 0x61 || buffer[1] == 0x71 || buffer[1] == 0x81 || buffer[1] == 0x91 || buffer[1] == 0xA1 || buffer[1] == 0xB1 || buffer[1] == 0xC1 || buffer[1] == 0xD1 || buffer[1] == 0xE1 || buffer[1] == 0xF1)
+      {
+        curfile = loaded_skylanders[1];
+      }
+      if (buffer[1] == 0x12 || buffer[1] == 0x22 || buffer[1] == 0x32 || buffer[1] == 0x42 || buffer[1] == 0x52 || buffer[1] == 0x62 || buffer[1] == 0x72 || buffer[1] == 0x82 || buffer[1] == 0x92 || buffer[1] == 0xA2 || buffer[1] == 0xB2 || buffer[1] == 0xC2 || buffer[1] == 0xD2 || buffer[1] == 0xE2 || buffer[1] == 0xF2)
+      {
+        curfile = loaded_skylanders[2];
+      }
+     /* curfile = loaded_skylanders[0]; // read skylander #1
+       if(buffer[1] & 0x01 == 1)
+      //if (buffer[1] == 0x21 || buffer[1] == 0x11)
       {
         curfile = loaded_skylanders[1]; // read skylander #2
-      }
+      }*/
       f_lseek(curfile, buffer[2] * BLOCK_SIZE);
 
       // FILL MIDBUFFER
@@ -715,11 +809,18 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
       outbuffer[16] = buffer[16];
       outbuffer[17] = buffer[17];
       outbuffer[18] = buffer[18];
-
-      outbuffer[1] = 0x10;
-      if (buffer[1] == 0x11)
+      
+      if(buffer[1] == 0x10 || buffer[1] == 0x20 || buffer[1] == 0x30 || buffer[1] == 0x40 || buffer[1] == 0x50 || buffer[1] == 0x60 || buffer[1] == 0x70 || buffer[1] == 0x80 || buffer[1] == 0x90 || buffer[1] == 0xA0 || buffer[1] == 0xB0 || buffer[1] == 0xC0 || buffer[1] == 0xD0 || buffer[1] == 0xE0 || buffer[1] == 0xF0)
+        {
+       outbuffer[1] = 0x10;
+      }
+      if(buffer[1] == 0x11 || buffer[1] == 0x21 || buffer[1] == 0x31 || buffer[1] == 0x41 || buffer[1] == 0x51 || buffer[1] == 0x61 || buffer[1] == 0x71 || buffer[1] == 0x81 || buffer[1] == 0x91 || buffer[1] == 0xA1 || buffer[1] == 0xB1 || buffer[1] == 0xC1 || buffer[1] == 0xD1 || buffer[1] == 0xE1 || buffer[1] == 0xF1)
       {
         outbuffer[1] = 0x11;
+      }
+      if (buffer[1] == 0x12 || buffer[1] == 0x22 || buffer[1] == 0x32 || buffer[1] == 0x42 || buffer[1] == 0x52 || buffer[1] == 0x62 || buffer[1] == 0x72 || buffer[1] == 0x82 || buffer[1] == 0x92 || buffer[1] == 0xA2 || buffer[1] == 0xB2 || buffer[1] == 0xC2 || buffer[1] == 0xD2 || buffer[1] == 0xE2 || buffer[1] == 0xF2)
+      {
+         outbuffer[1] = 0x12;
       }
       tud_hid_report(0, outbuffer, bufsize);
       break;

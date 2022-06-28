@@ -21,12 +21,14 @@ add_executable(skylander_portal_emu
 
 target_sources(skylander_portal_emu PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/main.c
+        ${CMAKE_CURRENT_LIST_DIR}/rijndael.c
+        ${CMAKE_CURRENT_LIST_DIR}/SkylanderCrypt.c
         ${CMAKE_CURRENT_LIST_DIR}/hw_config.c
         ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
         )
         
 add_subdirectory(lib/no-OS-FatFS-SD-SPI-RPi-Pico/FatFs_SPI build)
-
+include_directories(lib/openssl/include )
 
 # pull in common dependencies 
 target_link_libraries(skylander_portal_emu PUBLIC pico_stdlib tinyusb_device tinyusb_board hardware_i2c hardware_gpio FatFs_SPI)

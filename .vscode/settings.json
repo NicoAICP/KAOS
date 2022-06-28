@@ -1,0 +1,7 @@
+{
+    "C_Cpp.errorSquiggles": "Disabled",
+    "files.associations": {
+        "skylandercrypt.h": "c",
+        "md5.h": "c"
+    }
+}

@@ -42,7 +42,7 @@ tusb_desc_device_t const desc_device =
 
     .idVendor           = 0x1430,
     .idProduct          = 0x0150,
-    .bcdDevice          = 0x2508,
+    .bcdDevice          = 0x0100,//0x2508,
 
     .iManufacturer      = 0x01,
     .iProduct           = 0x02,
@@ -76,7 +76,7 @@ uint8_t const desc_hid_report[] =
   0x95, 0x20,        //   Report Count (32)
   0x81, 0x00,        //   Input (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
   0x19, 0x01,        //   Usage Minimum (0x01)
-  0x29, 0x40,        //   Usage Maximum (0x40)
+  0x29, 0xFF,//0x40,        //   Usage Maximum (0x40)
   0x91, 0x00,        //   Output (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
   0xC0,              // End Collection
 // 29 bytes
@@ -114,7 +114,7 @@ uint8_t const desc_configuration[] =
   0x01,        // bConfigurationValue
   0x00,        // iConfiguration (String Index)
   0x80,        // bmAttributes
-  0x96,        // bMaxPower 300mA
+  0xFA,//0x96,        // bMaxPower 300mA
 
   0x09,        // bLength
   0x04,        // bDescriptorType (Interface)
@@ -138,15 +138,15 @@ uint8_t const desc_configuration[] =
   0x05,        // bDescriptorType (Endpoint)
   0x81,        // bEndpointAddress (IN/D2H)
   0x03,        // bmAttributes (Interrupt)
-  0x20, 0x00,  // wMaxPacketSize 32
-  0x04,        // bInterval 4 (unit depends on device speed)
+  0x40, 0x00,//0x20, 0x00,  // wMaxPacketSize 32
+  0x01,//0x04,        // bInterval 4 (unit depends on device speed)
 
   0x07,        // bLength
   0x05,        // bDescriptorType (Endpoint)
-  0x01,        // bEndpointAddress (OUT/H2D)
+  0x02,//0x01,        // bEndpointAddress (OUT/H2D)
   0x03,        // bmAttributes (Interrupt)
-  0x20, 0x00,  // wMaxPacketSize 32
-  0x04,        // bInterval 4 (unit depends on device speed)
+  0x40, 0x00,//0x20, 0x00,  // wMaxPacketSize 32
+  0x01,//0x04,        // bInterval 4 (unit depends on device speed)
 // 41 bytes
 };
 
@@ -218,8 +218,8 @@ char const* string_desc_arr [] =
 {
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
   "Activision",                     // 1: Manufacturer
-  "Spyro Portal",              // 2: Product                      
-  "0123456789",
+  "Spyro Porta",//"Spyro Portal",              // 2: Product                      
+  //"0123456789",
   "99B3f9C9E6"               // 3: Serials, should use chip ID
 };
 

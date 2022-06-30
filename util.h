@@ -12,6 +12,16 @@ int fd_in_array(FIL *fd, FIL *array[], int len)
   }
   return 0;
 }
+int get_fd_in_array(FIL *fd, FIL *array[], int len)
+{
+  for (int i = 0; i < len; i++)
+  {
+    if (array[i] == fd)
+      return i;
+  }
+  return 0;
+}
+
 int add_fd_to_array(FIL *fd, FIL *array[], int len)
 {
   for (int i = 0; i < len; i++)

@@ -325,13 +325,29 @@ int main()
       else
       {
         // TODO: Check if slot already has a file, if yes remove it
+        if(loaded_skylanders[selected_slot] != 0)
+        {
+          FIL *toClose = loaded_skylanders[selected_slot];
+          f_close(toClose);
+          free(toClose);
+          loaded_skylanders[selected_slot] = 0;
+          nbuffer = calloc(MSG_SIZE, 1);
+            nbuffer[0] = 0x53;
+            nbuffer[1] = create_sense_bitmask(loaded_skylanders, MAX_SKYLANDER_COUNT);
+            nbuffer[5] = sense_counter++;
+            nbuffer[6] = 0x01;
+            tud_hid_report(0, nbuffer, MSG_SIZE);
+            sleep_ms(500);
+            free(nbuffer);
+            
+        }
 
         FIL *newfile = calloc(1, sizeof(FIL));
         FRESULT fr = f_open(newfile, skyFiles[selected_skylander], FA_OPEN_EXISTING | FA_READ | FA_WRITE);
         if (fr != FR_OK && fr != FR_EXIST)
         {
           printf("f_open(%s) error (Probably because file is already loaded): %s (%d)\n", skyFiles[selected_skylander], FRESULT_str(fr), fr);
-          remove_fd_from_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+          //remove_fd_from_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
           lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
           lcd_string("  File already  ");
           lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);
@@ -342,28 +358,10 @@ int main()
         {
           if (fd_in_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT) == 0)
           {
-            add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+            //add_fd_to_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+            loaded_skylanders[selected_slot] = newfile;
 
-            // Read skylander data
-            // char *databuffer;
-            // uint actual_len = 0;
-            // databuffer = calloc(1024, 1);
-
-            // f_lseek(newfile, 0);
-            // f_read(newfile, midbuffer, BLOCK_SIZE, &actual_len);
-
-            // if (actual_len != BLOCK_SIZE)
-            // {
-            //  printf("Read data length is %i not %i", actual_len, BLOCK_SIZE);
-            //   return;
-            // }
-
-            // char *skyName = calloc(16, sizeof(char));
-            // GetName()
-            // IF Skylander nickname is null
             printf("File %s loaded", skyFiles[selected_skylander]);
-            // ELSE
-            // printf("File %s loaded", skyName);
             lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("  File  loaded  ") / 2);
             lcd_string("  File  loaded  ");
             sleep_ms(100);
@@ -374,10 +372,12 @@ int main()
             nbuffer[5] = sense_counter++;
             nbuffer[6] = 0x01;
             tud_hid_report(0, nbuffer, MSG_SIZE);
+            sleep_ms(500);
+            free(nbuffer);
           }
           else
           {
-            remove_fd_from_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
+            //remove_fd_from_array(newfile, loaded_skylanders, MAX_SKYLANDER_COUNT);
             lcd_set_cursor(0, (MAX_CHARS / 2) - strlen("  File already  ") / 2);
             lcd_string("  File already  ");
             lcd_set_cursor(1, (MAX_CHARS / 2) - strlen("     loaded     ") / 2);

@@ -1,4 +1,5 @@
 # KAOS
+## THIS PROJECT IS NOW OBSOLTE, please use [PTPE](https://github.com/NicoAICP/PTPE) from now on
 Pi Pico Skylander Portal Emulator
 
 Supports following types of Skylander formats:

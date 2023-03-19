@@ -1,5 +1,6 @@
 # KAOS
-## THIS PROJECT IS NOW OBSOLTE, please use [PTPE](https://github.com/NicoAICP/PTPE) from now on
+## KAOS is no longer in developtment. If you want to emulate Skylanders, please continue using KAOS for now.
+## In the future please use [PTPE](https://github.com/NicoAICP/PTPE), since this will replace KAOS.
 Pi Pico Skylander Portal Emulator
 
 Supports following types of Skylander formats:

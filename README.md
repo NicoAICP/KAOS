@@ -41,7 +41,7 @@ Connect all the things like the Connection Diagram is telling you
 
 Connection Diagram
 
-![Connection Diagram](https://media.discordapp.net/attachments/943501791612522527/989221754335535125/unknown.png?width=528&height=670)
+![Connection Diagram](https://raw.githubusercontent.com/NicoAICP/KAOS/main/Images/unknown.png)
  
 it should look something like this:
 
